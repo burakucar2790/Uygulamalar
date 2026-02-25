@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Turing Masaüstü</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body onclick="closeAllMenus()">
+
+<!-- Ana Uygulama Alanı (Tam Ekran) -->
+<div class="app-layout">
+    <div class="top-section ui-titlebar">
+        <div class="title-bar">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='currentColor'><path d='M2 4h20v16H2z'/></svg>
+                Turing Dosya Gezgini
+            </div>
+        </div>
+        
+        <div class="menu-bar" id="uiMenuBar">
+            <div class="dropdown" id="menuDosya" onclick="toggleMenu('menuDosya', event)">
+                <button class="drop-btn">Dosya</button>
+                <div class="drop-content">
+                    <div class="drop-item" onclick="createItem('folder')">📁 Yeni Klasör</div>
+                    <div class="drop-item" onclick="createItem('word')">📄 Yeni Kelime Kartı</div>
+                    <div class="drop-item" onclick="openBulkModal()">🗂️ Toplu Kelime Ekle</div>
+                    <div class="ctx-divider"></div>
+                    <div class="drop-item" onclick="createItem('game')">🎮 Yeni Oyun</div>
+                    <div class="drop-item" onclick="createItem('note')">📝 Yeni Not Defteri</div>
+                </div>
+            </div>
+            
+            <div class="dropdown" id="menuDuzenle" onclick="toggleMenu('menuDuzenle', event)">
+                <button class="drop-btn">Düzenle</button>
+                <div class="drop-content">
+                    <div class="drop-item disabled" id="menuUndo" onclick="undoLastAction()">↩️ Geri Al (Ctrl+Z)</div>
+                    <div class="drop-item disabled" id="menuRedo" onclick="redoLastAction()">↪️ İleri Al (Ctrl+Y)</div>
+                    <div class="drop-item" onclick="selectAll()">✅ Tümünü Seç (Ctrl+A)</div>
+                    <div class="drop-item" onclick="focusSearch()">🔍 Bul (Ctrl+F)</div>
+                    <div class="ctx-divider"></div>
+                    <div class="drop-item" id="topMenuIcon" onclick="openIconDialog()">🖼️ Simge Değiştir</div>
+                    <div class="drop-item" id="topMenuCopy" onclick="ctxAction('copy')">📋 Kopyala</div>
+                    <div class="drop-item" onclick="ctxAction('paste')" id="topMenuPaste" style="display:none;">📋 Yapıştır</div>
+                    <div class="ctx-divider"></div>
+                    <div class="drop-item" id="topMenuMove" onclick="moveSelected()">✂️ Seçilenleri Taşı</div>
+                    <div class="drop-item" id="topMenuDelete" onclick="deleteSelected()">🗑️ Çöpe At</div>
+                    <div class="ctx-divider"></div>
+                    <div class="drop-item" onclick="toggleUI()">👁️ Gezgini Gizle/Göster (Ctrl+B)</div>
+                </div>
+            </div>
+
+            <div class="dropdown" id="menuYedek" onclick="toggleMenu('menuYedek', event)">
+                <button class="drop-btn">Yedekleme</button>
+                <div class="drop-content">
+                    <div class="drop-item" onclick="exportData()">⬇️ Yedek İndir</div>
+                    <div class="drop-item" onclick="document.getElementById('importFile').click()">⬆️ Yedek Yükle</div>
+                    <div class="ctx-divider"></div>
+                    <div class="drop-item" onclick="openResetDialog()" style="color:#ef4444;">⚠️ Her Şeyi Sıfırla</div>
+                </div>
+            </div>
+            <input type="file" id="importFile" style="display:none" accept=".json" onchange="importData(event)">
+        </div>
+    </div>
+
+    <div class="toolbar" id="uiToolBar">
+        <div class="nav-group">
+            <button class="nav-btn" id="btnBack" onclick="goBack()" title="Geri">←</button>
+            <button class="nav-btn" id="btnForward" onclick="goForward()" title="İleri">→</button>
+            <button class="nav-btn" onclick="goUp()" title="Yukarı">↑</button>
+        </div>
+        <div id="trashTools" style="display:none; gap:6px; margin-right: 6px;">
+            <button class="smart-btn" onclick="restoreAll()">♻️ Tümünü Kurtar</button>
+            <button class="smart-btn" onclick="emptyTrash()">🗑️ Boşalt</button>
+        </div>
+        <div class="address-bar">
+            ⭐ <input type="text" class="address-input" id="addressPath" readonly>
+        </div>
+        
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <select class="view-select" id="layoutMode" onchange="renderContent()" title="Düzen">
+                <option value="grid">Masaüstü</option>
+                <option value="list">Liste</option>
+            </select>
+
+            <select class="view-select" id="viewMode" onchange="renderContent()" title="Görünüm Modu">
+                <option value="all">Tümü (Kaynak/Çeviri)</option>
+                <option value="tr">Sadece Çeviri</option>
+                <option value="en">Sadece Kaynak</option>
+            </select>
+
+            <select class="view-select" id="sortMode" onchange="renderContent()" title="Sıralama Modu">
+                <option value="name_asc">A - Z</option>
+                <option value="name_desc">Z - A</option>
+                <option value="date_desc">En Yeni</option>
+                <option value="date_asc">En Eski</option>
+            </select>
+        </div>
+
+        <div class="search-box" id="uiSearchBox">
+            🔍 <input type="text" id="searchBox" class="search-input" placeholder="Genel Arama yap..." oninput="renderContent()">
+        </div>
+    </div>
+
+    <div class="main-area">
+        <div class="sidebar" id="sidebarTree"></div>
+        <div class="content-area" id="contentArea" oncontextmenu="showContextMenu(event, 'bg', null)"></div>
+    </div>
+
+    <div class="status-bar" id="uiStatusBar">
+        <span id="statusText">0 öğe | 0 seçili</span>
+    </div>
+</div>
+
+<div id="contextMenu">
+    <div id="ctxNewGroup">
+        <div class="ctx-item" onclick="createItem('folder', true)">📁 Yeni Klasör</div>
+        <div class="ctx-item" onclick="createItem('word', true)">📄 Yeni Kelime</div>
+        <div class="ctx-item" onclick="openBulkModal()">🗂️ Toplu Ekle</div>
+        <div class="ctx-item" onclick="createItem('game', true)">🎮 Yeni Oyun</div>
+        <div class="ctx-item" onclick="createItem('note', true)">📝 Yeni Not</div>
+        <div class="ctx-divider"></div>
+    </div>
+    <div class="ctx-item" id="ctxOpen" onclick="ctxAction('open')">📂 Aç</div>
+    <div class="ctx-item" id="ctxCopy" onclick="ctxAction('copy')">📋 Kopyala</div>
+    <div class="ctx-item" id="ctxPaste" onclick="ctxAction('paste')">📋 Yapıştır</div>
+    <div class="ctx-item" id="ctxEdit" onclick="ctxAction('edit')">⚙️ Özellikler</div>
+    <div class="ctx-item" id="ctxEmoji" onclick="openEmojiPicker()">😀 Emoji Ekle</div>
+    <div class="ctx-item" id="ctxIcon" onclick="openIconDialog()">🖼️ Simge Değiştir</div>
+    <div class="ctx-item" id="ctxDetails" onclick="ctxAction('details')">ℹ️ Detaylar</div>
+    <div class="ctx-item" id="ctxMove" onclick="ctxAction('move')">✂️ Taşı...</div>
+    <div class="ctx-divider" id="ctxDiv2"></div>
+    <div class="ctx-item" id="ctxRestore" onclick="ctxAction('restore')" style="display:none;">♻️ Geri Yükle</div>
+    <div class="ctx-item" id="ctxDelete" onclick="ctxAction('delete')">🗑️ Çöpe At</div>
+    <div class="ctx-item" id="ctxEmptyTrash" onclick="ctxAction('emptyTrash')" style="display:none;">🗑️ Çöpü Boşalt</div>
+</div>
+
+<div class="dialog-overlay" id="detailsDialog">
+    <div class="dialog">
+        <div class="dialog-header"><span>Öğe Detayları</span> <span onclick="closeDialog('detailsDialog')">✖</span></div>
+        <div class="dialog-body" id="detailsBody"></div>
+        <div class="dialog-footer">
+            <button class="dialog-btn" onclick="closeDialog('detailsDialog')">Kapat</button>
+        </div>
+    </div>
+</div>
+
+<div class="dialog-overlay" id="bulkDialog">
+    <div class="dialog">
+        <div class="dialog-header"><span>Toplu Kelime Ekle</span> <span onclick="closeDialog('bulkDialog')">✖</span></div>
+        <div class="dialog-body">
+            <label>Eklenecek Kelimeler:</label>
+            <textarea id="bulkInput" rows="6" placeholder="apple&#10;banana&#10;car..."></textarea>
+            <label>Çeviri Yönü:</label>
+            <div style="display:flex; gap:5px; align-items:center;">
+                <select id="bulkL1" style="flex:1;">
+                    <option value="en">İngilizce</option><option value="tr">Türkçe</option><option value="de">Almanca</option>
+                    <option value="fr">Fransızca</option><option value="es">İspanyolca</option><option value="it">İtalyanca</option>
+                    <option value="ru">Rusça</option><option value="ja">Japonca</option><option value="ko">Korece</option>
+                    <option value="zh">Çince</option><option value="ar">Arapça</option>
+                </select>
+                <span>➡</span>
+                <select id="bulkL2" style="flex:1;">
+                    <option value="tr" selected>Türkçe</option><option value="en">İngilizce</option><option value="de">Almanca</option>
+                    <option value="fr">Fransızca</option><option value="es">İspanyolca</option><option value="it">İtalyanca</option>
+                    <option value="ru">Rusça</option><option value="ja">Japonca</option><option value="ko">Korece</option>
+                    <option value="zh">Çince</option><option value="ar">Arapça</option>
+                </select>
+            </div>
+            <div id="bulkStatus" style="color:var(--primary); font-weight:600; font-size:12px;"></div>
+        </div>
+        <div class="dialog-footer">
+            <button class="dialog-btn primary" id="bulkStartBtn" onclick="startBulkImport()">Başlat</button>
+            <button class="dialog-btn" onclick="closeDialog('bulkDialog')">İptal</button>
+        </div>
+    </div>
+</div>
+
+<div class="dialog-overlay" id="wordDialog">
+    <div class="dialog">
+        <div class="dialog-header"><span id="wTitle">Kelime Özellikleri</span> <span onclick="closeDialog('wordDialog')">✖</span></div>
+        <div class="dialog-body">
+            <div style="width:100%; height:120px; border:1px solid var(--border-color); background:var(--bg-sidebar); border-radius: 8px; display:flex; justify-content:center; overflow:hidden;">
+                <img id="wPreview" src="" alt="Görsel Yok" style="max-height:100%; object-fit: cover;">
+            </div>
+            <input type="hidden" id="wId">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+                <label style="margin:0;">Kelime / İfade:</label>
+                <select id="wLang1" style="width:auto; padding:2px 6px; height:24px; font-size:11px; border:1px solid var(--border-color); border-radius:4px;">
+                    <option value="en">İngilizce</option><option value="tr">Türkçe</option><option value="de">Almanca</option>
+                    <option value="fr">Fransızca</option><option value="es">İspanyolca</option><option value="it">İtalyanca</option>
+                    <option value="ru">Rusça</option><option value="ja">Japonca</option><option value="ko">Korece</option>
+                    <option value="zh">Çince</option><option value="ar">Arapça</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <input type="text" id="wEn" oninput="autoFetchImage()">
+                <button class="play-btn" onclick="speakWord(1)">🔊</button>
+                <button class="smart-btn" onclick="translateWord(1)">Çevir ⬇</button>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px; margin-top:10px;">
+                <label style="margin:0;">Anlamı / Çevirisi:</label>
+                <select id="wLang2" style="width:auto; padding:2px 6px; height:24px; font-size:11px; border:1px solid var(--border-color); border-radius:4px;">
+                    <option value="tr" selected>Türkçe</option><option value="en">İngilizce</option><option value="de">Almanca</option>
+                    <option value="fr">Fransızca</option><option value="es">İspanyolca</option><option value="it">İtalyanca</option>
+                    <option value="ru">Rusça</option><option value="ja">Japonca</option><option value="ko">Korece</option>
+                    <option value="zh">Çince</option><option value="ar">Arapça</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <input type="text" id="wTr">
+                <button class="play-btn" onclick="speakWord(2)">🔊</button>
+                <button class="smart-btn" onclick="translateWord(2)">Çevir ⬆</button>
+            </div>
+            <label>Görsel URL:</label>
+            <div class="input-group">
+                <input type="text" id="wImg" oninput="updatePrev(this.value)">
+                <button class="smart-btn" onclick="randomOSImage()">Rastgele</button>
+                <button class="smart-btn" onclick="searchGoogleImage()">Web'de Bul</button>
+            </div>
+            <div id="wLoader" style="color:var(--primary); display:none; font-size:12px;">İşleniyor...</div>
+        </div>
+        <div class="dialog-footer">
+            <button class="dialog-btn primary" onclick="saveWord()">Kaydet</button>
+            <button class="dialog-btn" onclick="closeDialog('wordDialog')">İptal</button>
+        </div>
+    </div>
+</div>
+
+<div class="dialog-overlay" id="noteDialog">
+    <div class="dialog" style="max-width: 550px;">
+        <div class="dialog-header"><span id="nTitle">Not Defteri</span> <span onclick="closeDialog('noteDialog')">✖</span></div>
+        <div class="dialog-body">
+            <input type="hidden" id="nId">
+            <div class="input-group">
+                <input type="text" id="nTitleInp" placeholder="Not Başlığı...">
+                <button class="play-btn" onclick="speakText(document.getElementById('nTitleInp').value, 'tr-TR')">🔊</button>
+            </div>
+            <div class="editor-toolbar">
+                <button class="editor-btn" onclick="execCmd('bold')"><b>B</b></button>
+                <button class="editor-btn" onclick="execCmd('italic')"><i>I</i></button>
+                <button class="editor-btn" onclick="execCmd('underline')"><u>U</u></button>
+                <button class="editor-btn" onclick="execCmd('insertUnorderedList')">• Liste</button>
+                <div style="flex:1;"></div>
+                <button class="smart-btn" onclick="speakHtmlContent('nContent', 'tr-TR')">🔊 Oku</button>
+            </div>
+            <div id="nContent" class="rich-editor" contenteditable="true" placeholder="Yazmaya başla..." oninput="updateNoteStats()"></div>
+            <div id="nStats" style="font-size:11px; color:var(--text-muted); text-align:right; margin-top:4px;">0 kelime | 0 karakter</div>
+        </div>
+        <div class="dialog-footer">
+            <button class="dialog-btn primary" onclick="saveNote()">Kaydet</button>
+            <button class="dialog-btn" onclick="closeDialog('noteDialog')">İptal</button>
+        </div>
+    </div>
+</div>
+
+<div class="dialog-overlay" id="gameDialog">
+    <div class="dialog">
+        <div class="dialog-header"><span id="gDialogTitle">Oyun Ekle</span> <span onclick="closeDialog('gameDialog')">✖</span></div>
+        <div class="dialog-body">
+            <input type="hidden" id="gId">
+            <label>Oyun Adı:</label>
+            <input type="text" id="gTitle" placeholder="Örn: Super Mario Bros">
+            <label>Oyun URL'si (Embed):</label>
+            <input type="text" id="gUrl" placeholder="https://www.retrogames.cc/embed/...">
+            <div style="font-size:11px; color:var(--text-muted); margin-top:5px;">İpucu: Oyunun "Embed" kodunu (iframe) veya doğrudan URL'sini yapıştırabilirsiniz.</div>
+        </div>
+        <div class="dialog-footer">
+            <button class="dialog-btn primary" onclick="saveGame()">Kaydet</button>
+            <button class="dialog-btn" onclick="closeDialog('gameDialog')">İptal</button>
+        </div>
+    </div>
+</div>
+
+<div id="playDialog" class="game-window" style="display:none;">
+    <div class="dialog-header" id="playHeader">
+        <span id="playTitle">Oyun</span>
+        <div class="window-controls">
+            <span onclick="refreshGame()" title="Yenile" style="cursor:pointer; font-size:16px;">🔄</span>
+            <span onclick="toggleGameMaximize()" title="Pencereyi Kapla" style="cursor:pointer; font-size:16px;">🔲</span>
+            <span onclick="toggleGameNativeFullscreen()" title="Tam Ekran (Çerçevesiz)" style="cursor:pointer; font-size:16px;">⛶</span>
+            <span onclick="closeGameDialog()" title="Kapat" style="cursor:pointer; font-size:16px; color:#ef4444;">✖</span>
+        </div>
+    </div>
+    <div class="dialog-body" style="padding:0; flex:1; overflow:hidden; display:flex;">
+        <iframe id="playFrame" class="play-iframe" src="" allowfullscreen></iframe>
+    </div>
+    <div class="resize-handle" id="playResize"></div>
+</div>
+
+<div class="dialog-overlay" id="moveDialog">
+    <div class="dialog">
+        <div class="dialog-header"><span>Hedef Klasör</span> <span onclick="closeDialog('moveDialog')">✖</span></div>
+        <div class="dialog-body">
+            <select id="moveTargetSelect" size="8" style="height: 180px; padding: 4px;"></select>
+        </div>
+        <div class="dialog-footer">
+            <button class="dialog-btn primary" onclick="executeMove()">Taşı</button>
+            <button class="dialog-btn" onclick="closeDialog('moveDialog')">İptal</button>
+        </div>
+    </div>
+</div>
+
+<div class="dialog-overlay" id="emojiDialog">
+    <div class="dialog" style="max-width: 360px;">
+        <div class="dialog-header"><span>Bir Emoji Seç</span> <span onclick="closeDialog('emojiDialog')">✖</span></div>
+        <div class="dialog-body">
+            <div class="emoji-grid" id="emojiGrid">
+                <!-- JS ile doldurulacak -->
+            </div>
+        </div>
+        <div class="dialog-footer">
+            <button class="dialog-btn" style="color:#ef4444;" onclick="saveEmoji(null)">❌ Emojiyi Kaldır</button>
+            <button class="dialog-btn" onclick="closeDialog('emojiDialog')">İptal</button>
+        </div>
+    </div>
+</div>
+
+<div class="dialog-overlay" id="iconDialog">
+    <div class="dialog" style="max-width: 400px;">
+        <div class="dialog-header"><span>Simge Değiştir</span> <span onclick="closeDialog('iconDialog')">✖</span></div>
+        <div class="dialog-body">
+            <div style="display:flex; justify-content:center; margin-bottom:10px; min-height:64px; align-items:center; background:var(--bg-sidebar); border-radius:8px; padding:10px;">
+                <img id="iconPreview" src="" style="max-width:64px; max-height:64px; display:none; object-fit:contain;">
+                <span id="iconPreviewPlaceholder" style="color:var(--text-muted); font-size:12px;">Önizleme</span>
+            </div>
+            <label>Hazır Simgeler:</label>
+            <div id="defaultIconGrid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); gap:8px; margin-bottom:10px; max-height:140px; overflow-y:auto; border:1px solid var(--border-color); border-radius:6px; padding:8px; background:var(--bg-sidebar);"></div>
+            <label>Resim URL'si:</label>
+            <input type="text" id="iconUrlInput" placeholder="https://..." oninput="previewIconUrl()">
+            <label>Veya Bilgisayardan Yükle:</label>
+            <input type="file" id="iconFileInput" onchange="previewIconFile()">
+        </div>
+        <div class="dialog-footer">
+            <button class="dialog-btn primary" onclick="saveCustomIcon()">Kaydet</button>
+            <button class="dialog-btn" style="color:#ef4444;" onclick="removeCustomIcon()">Sıfırla</button>
+            <button class="dialog-btn" onclick="closeDialog('iconDialog')">İptal</button>
+        </div>
+    </div>
+</div>
+
+<div class="dialog-overlay" id="folderDialog">
+    <div class="dialog" style="max-width: 350px;">
+        <div class="dialog-header"><span>Klasör Düzenle</span> <span onclick="closeDialog('folderDialog')">✖</span></div>
+        <div class="dialog-body">
+            <input type="hidden" id="fId">
+            <label>Klasör Adı:</label>
+            <input type="text" id="fName" placeholder="Klasör Adı">
+            <label>Renk Seç:</label>
+            <div class="color-options">
+                <div class="color-opt" style="background:#fcd34d" onclick="selectColor('#fcd34d')"></div>
+                <div class="color-opt" style="background:#60a5fa" onclick="selectColor('#60a5fa')"></div>
+                <div class="color-opt" style="background:#f87171" onclick="selectColor('#f87171')"></div>
+                <div class="color-opt" style="background:#4ade80" onclick="selectColor('#4ade80')"></div>
+                <div class="color-opt" style="background:#c084fc" onclick="selectColor('#c084fc')"></div>
+                <div class="color-opt" style="background:#fb923c" onclick="selectColor('#fb923c')"></div>
+                <div class="color-opt" style="background:#94a3b8" onclick="selectColor('#94a3b8')"></div>
+            </div>
+            <input type="color" id="fColorInput" value="#fcd34d" style="width:100%; height:32px; padding:0; border:none; margin-top:8px; cursor:pointer;">
+        </div>
+        <div class="dialog-footer">
+            <button class="dialog-btn primary" onclick="saveFolder()">Kaydet</button>
+            <button class="dialog-btn" onclick="closeDialog('folderDialog')">İptal</button>
+        </div>
+    </div>
+</div>
+
+<div class="dialog-overlay" id="welcomeDialog">
+    <div class="dialog" style="max-width: 400px;">
+        <div class="dialog-header"><span>👋 Selamlar!</span></div>
+        <div class="dialog-body">
+            <p>Ben Asistan. Küçük bir hatırlatma yapmak istedim.</p>
+            <p>Bu sistemdeki verilerin sadece senin bilgisayarında (tarayıcıda) saklanıyor. Tarayıcı geçmişini temizlersen verilerin uçabilir. Emeklerinin kaybolmasını istemem.</p>
+            <p>Lütfen ara sıra "Yedekleme" bölümünden yedeğini almayı unutma.</p>
+            <div style="display:flex; align-items:center; gap:8px; margin-top:5px;">
+                <input type="checkbox" id="dontShowWelcome" style="width:auto; cursor:pointer;">
+                <label for="dontShowWelcome" style="font-weight:normal; cursor:pointer; margin:0;">Bunu bir daha gösterme</label>
+            </div>
+        </div>
+        <div class="dialog-footer">
+            <button class="dialog-btn primary" onclick="closeWelcomeDialog()">Tamam, Anladım</button>
+        </div>
+    </div>
+</div>
+
+<div class="dialog-overlay" id="resetDialog">
+    <div class="dialog" style="max-width: 400px;">
+        <div class="dialog-header"><span style="color:#ef4444;">⚠️ Dikkat: Sıfırlama İşlemi</span></div>
+        <div class="dialog-body">
+            <p>Bu işlem, <b>tüm verilerinizi (klasörler, kelimeler, notlar) kalıcı olarak silecektir.</b></p>
+            <p>Bu işlem geri alınamaz. Devam etmeden önce yedeğinizi aldığınızdan emin olun.</p>
+        </div>
+        <div class="dialog-footer">
+            <button class="dialog-btn" style="background:#ef4444; color:white; border-color:#ef4444;" onclick="executeReset()">Evet, Her Şeyi Sıfırla</button>
+            <button class="dialog-btn" onclick="closeDialog('resetDialog')">Vazgeç</button>
+        </div>
+    </div>
+</div>
+
+<div id="selectionBox"></div>
+<script src="script.js"></script>
+<script>window.onload = function() { renderAll(); };</script>
+</body>
+</html>
