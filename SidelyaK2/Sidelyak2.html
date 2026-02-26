@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sidelya Kelime Oyunu V26 - Pro Trainer</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --primary: #58cc02; --secondary: #1cb0f6; --danger: #ff4b4b; --warning: #ffa502;
+            --bg: #131f24; --card: #1f2f36; --text: #ffffff; --border: #37464f; --gold: #ffd700; --exam: #a349a4;
+        }
+        * { box-sizing: border-box; font-family: sans-serif !important; }
+        body { background: var(--bg); margin: 0; color: var(--text); overflow: hidden; height: 100vh; }
+        .app-container { width: 100%; max-width: 480px; height: 100vh; margin: auto; position: relative; display: flex; flex-direction: column; }
+        .screen { display: none; flex-direction: column; padding: 20px; height: 100%; width: 100%; overflow: hidden; }
+        .active-screen { display: flex; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; min-height: 50px; }
+        .timer-container { width: 100%; height: 8px; background: var(--border); border-radius: 10px; margin: 10px 0; overflow: hidden; }
+        #timer-bar { width: 100%; height: 100%; background: var(--secondary); transition: width 0.1s linear; }
+        .word-box { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 40px; text-align: center; }
+        .q-word { font-size: 3.2rem; font-weight: 900; margin: 0; color: #fff; text-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; margin: 20px 0; }
+        .btn-opt { background: var(--card); border: 2px solid var(--border); padding: 18px 5px; border-radius: 15px; color: white; font-weight: bold; cursor: pointer; font-size: 1.1rem; transition: all 0.2s; }
+        input[type="text"], input[type="number"], select { width: 100%; padding: 12px; border-radius: 12px; border: 2px solid var(--border); background: var(--card); color: white; font-size: 1rem; margin-bottom: 8px; }
+        .action-area { padding-bottom: 30px; margin-top: auto; width: 100%; }
+        .btn-ui { background: var(--primary); color: white; border: none; padding: 18px; border-radius: 16px; font-weight: bold; cursor: pointer; width: 100%; box-shadow: 0 5px 0 #3a8a02; font-size: 1.1rem; margin-bottom: 10px; position: relative; }
+        .btn-ui:active { transform: translateY(2px); box-shadow: 0 2px 0 #3a8a02; }
+        #undo-toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 12px 20px; border-radius: 30px; display: none; align-items: center; gap: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); z-index: 1000; }
+        #undo-btn { color: var(--gold); border: none; background: none; font-weight: bold; cursor: pointer; }
+        .hint-badge { position: absolute; top: -10px; right: -5px; background: var(--gold); color: black; padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; border: 2px solid #fff; }
+        .hint-progress-container { width: 100%; height: 6px; background: rgba(0,0,0,0.3); border-radius: 3px; margin-top: 8px; overflow: hidden; }
+        .hint-progress-fill { height: 100%; background: var(--gold); width: 0%; transition: width 0.3s; }
+        .lang-switcher { position: absolute; top: 10px; right: 10px; z-index: 10; display: flex; gap: 5px; }
+        .lang-btn { background: var(--card); border: 1px solid var(--border); color: white; padding: 5px 10px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; }
+        .lang-active { border-color: var(--primary); color: var(--primary); }
+        .scroll-list { flex: 1; overflow-y: auto; margin-bottom: 10px; padding: 5px; border: 1px solid var(--border); border-radius: 10px; background: rgba(0,0,0,0.2); }
+        .word-item, .rank-edit-item { background: var(--card); padding: 10px; margin-bottom: 6px; border-radius: 8px; display: flex; align-items: center; gap: 10px; }
+        .word-item span, .rank-edit-item span { flex: 1; font-size: 0.9rem; }
+        .rank-item { background: var(--card); padding: 12px; margin-bottom: 8px; border-radius: 12px; display: flex; justify-content: space-between; border-left: 5px solid var(--border); }
+        .rank-1 { border-left-color: #ffd700; background: linear-gradient(90deg, #1f2f36, #2c3e50); }
+        .rank-2 { border-left-color: #c0c0c0; }
+        .rank-3 { border-left-color: #cd7f32; }
+        .title-tag { font-size: 0.7rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-left: 5px; vertical-align: middle; }
+        .edit-btn { background: none; border: none; color: var(--warning); cursor: pointer; font-size: 1.1rem; padding: 0 5px; }
+        .tab-menu { display: flex; gap: 5px; margin-bottom: 10px; }
+        .tab-btn { flex: 1; padding: 10px; border-radius: 10px; border: none; background: var(--border); color: white; cursor: pointer; font-weight: bold; }
+        .tab-btn.active { background: var(--secondary); }
+        .config-label { font-size: 0.8rem; color: var(--secondary); font-weight: bold; margin-bottom: 4px; display: block; }
+        .stats-badge { background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; border: 1px solid var(--border); }
+        .error-count { color: var(--danger); font-weight: bold; font-size: 0.7rem; margin-left: 5px;}
+        .error-user-header { background: var(--border); color: var(--gold); padding: 8px; font-size: 0.9rem; font-weight: bold; margin-top: 10px; border-radius: 5px; }
+        .word-select-item { display: flex; align-items: center; background: var(--card); padding: 10px; margin-bottom: 5px; border-radius: 10px; cursor: pointer; }
+        .word-select-item input { width: 20px; height: 20px; margin-right: 10px; }
+        .bonus-life-anim { animation: bonus 1s ease-out; color: #ff4b4b; }
+        @keyframes bonus { 0% {transform: scale(1);} 50% {transform: scale(1.5);} 100% {transform: scale(1);} }
+        
+        /* Yeni eklenen toplu silme stilleri */
+        .bulk-header { display: flex; align-items: center; background: var(--border); padding: 10px; border-radius: 10px; margin-bottom: 8px; font-size: 0.9rem; }
+        .rank-check { width: 18px; height: 18px; margin-right: 10px; display: none; }
+        .show-checks .rank-check { display: block; }
+        #btn-bulk-delete { display: none; background: var(--danger); margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="app-container" id="main-app"></div>
+<div id="undo-toast">
+    <span id="undo-text">Kelime silindi.</span>
+    <button id="undo-btn">GERİ AL</button>
+</div>
+
+<script>
+    const LANGS = {
+        tr: {
+            title1: "SİDELYA", title2: "KELİME OYUNU", placeholder: "Oyuncu İsmi Girin...",
+            btnPractice: "DERS MODU", btnExam: "ÖZEL SINAV MODU",
+            btnSettings: "YÖNETİM PANELİ", setHead: "YÖNETİM PANELİ",
+            btnBack: "ANA MENÜ", btnClear: "TÜMÜNÜ SİL", btnHint: "İPUCU",
+            btnNext: "SIRADAKİ", btnExit: "ÇIKIŞ", btnGiveUp: "PES ET (Kaydet)",
+            alertName: "Lütfen devam etmek için bir isim girin!", gameOver: "OYUN BİTTİ! Skor: ",
+            bestPlayers: "🏆 EN İYİ 10 OYUNCU", emptyRank: "Henüz rekabet başlamadı!",
+            add: "EKLE", update: "GÜNCELLE", cancel: "VAZGEÇ", hintText: "İpucu", tabWords: "KELİMELER", tabRank: "SKORLAR", tabErrors: "HATA RAPORU",
+            exitConfirm: "Oyunu bitirip verileri kaydetmek istiyor musun?",
+            examCfg: "ÖZEL SINAV GİRİŞİ", startExam: "SINAVI BAŞLAT", cfgLife: "Can Limiti", cfgTime: "Süre (Saniye)",
+            cfgDist: "Yanıt Sayısı (Zorluk)", cfgMode: "Zaman Modu", modeStatic: "Sınırsız Zaman", modeTimed: "Zamana Karşı",
+            pracCfg: "DERS AYARLARI", startPrac: "DERSE BAŞLA", stats: "İstatistikler", right: "D", wrong: "Y", time: "Süre",
+            pracSummary: "DERS SONUCU", resetErrors: "Hataları Sıfırla", poolCustom: "Kendi Seçtiğim Kelimeler",
+            selectAll: "Tümünü Seç", deleteSelected: "Seçilenleri Sil"
+        },
+        en: {
+            title1: "SIDELYA", title2: "WORD GAME", placeholder: "Enter Player Name...",
+            btnPractice: "PRACTICE MODE", btnExam: "CUSTOM EXAM MODE",
+            btnSettings: "MANAGEMENT PANEL", setHead: "MANAGEMENT PANEL",
+            btnBack: "MAIN MENU", btnClear: "CLEAR ALL", btnHint: "HINT",
+            btnNext: "NEXT", btnExit: "EXIT", btnGiveUp: "GIVE UP (Save)",
+            alertName: "Please enter a name to continue!", gameOver: "GAME OVER! Score: ",
+            bestPlayers: "TOP 10 PLAYERS", emptyRank: "No competition yet!",
+            add: "ADD", update: "UPDATE", cancel: "CANCEL", hintText: "Hint", tabWords: "WORDS", tabRank: "SCORES", tabErrors: "ERROR LOG",
+            exitConfirm: "Do you want to end and save?",
+            examCfg: "EXAM ENTRANCE", startExam: "START EXAM", cfgLife: "Life Limit", cfgTime: "Time (Sec)",
+            cfgDist: "Options Count", cfgMode: "Time Mode", modeStatic: "No Limit", modeTimed: "Against Time",
+            pracCfg: "PRACTICE SETTINGS", startPrac: "START PRACTICE", stats: "Stats", right: "R", wrong: "W", time: "Time",
+            pracSummary: "PRACTICE SUMMARY", resetErrors: "Reset Errors", poolCustom: "Selected Words Only",
+            selectAll: "Select All", deleteSelected: "Delete Selected"
+        }
+    };
+
+    let curLang = localStorage.getItem('sidelya_lang') || 'tr';
+    const TITLES = [
+        { name: "KİBARİYE EFSANESİ", color: "#ffd700" },
+        { name: "KELİME BÜKÜCÜ", color: "#c0c0c0" },
+        { name: "DİL ÜSTADI", color: "#cd7f32" }
+    ];
+
+    const initialWords = [{e: "Success", t: "Başarı"}, {e: "Freedom", t: "Özgürlük"}];
+    let db = JSON.parse(localStorage.getItem('sidelya_db_v21')) || initialWords;
+    let leaders = JSON.parse(localStorage.getItem('sidelya_rank_v21')) || [];
+    let errorLog = JSON.parse(localStorage.getItem('sidelya_errors_v21_users')) || {}; 
+    
+    let editIndex = null;
+    let lastDeleted = null;
+    let undoTimeout = null;
+    let s = { 
+        score: 0, life: 3, mode: "exam", cur: null, 
+        time: 100, answered: false, playerName: "MISAFIR",
+        maxTime: 10, distractorCount: 3,
+        correctCount: 0, wrongCount: 0, startTime: 0, totalSeconds: 0,
+        hints: 0, correctStreak: 0, nextHintAt: 10, usedHintCount: 0,
+        bonusStreak: 0
+    };
+    let timerID = null;
+    let globalClockID = null;
+    let currentTab = 'words';
+
+    function initApp() {
+        const T = LANGS[curLang];
+        const mainApp = document.getElementById('main-app');
+        mainApp.innerHTML = `
+            <div class="lang-switcher">
+                <button class="lang-btn ${curLang==='tr'?'lang-active':''}" onclick="changeLang('tr')">TR</button>
+                <button class="lang-btn ${curLang==='en'?'lang-active':''}" onclick="changeLang('en')">EN</button>
+            </div>
+            
+            <div id="scr-login" class="screen active-screen">
+                <h1 style="text-align:center; color: var(--primary); margin-top: 20px; font-size: 2.2rem;">${T.title1} <br><span style="color:white; font-size: 1.8rem;">${T.title2}</span></h1>
+                <div id="leaderboard" style="flex:1; margin-top:15px; overflow-y:auto; padding-right:5px;">
+                    <h4 id="rank-head" style="text-align:center; color:var(--secondary); margin-bottom:10px;">${T.bestPlayers}</h4>
+                    <div id="rank-list"></div>
+                </div>
+                <div class="action-area">
+                    <button class="btn-ui" style="background:var(--exam); box-shadow: 0 5px 0 #7e387f;" onclick="show('scr-exam-config')">${T.btnExam}</button>
+                    <button class="btn-ui" style="background:var(--secondary); box-shadow: 0 5px 0 #1689be;" onclick="show('scr-practice-config')">${T.btnPractice}</button>
+                    <button class="btn-ui" style="background:var(--warning); box-shadow: 0 5px 0 #e67e22;" onclick="openSettings()">${T.btnSettings}</button>
+                </div>
+            </div>
+
+            <div id="scr-exam-config" class="screen">
+                <h3>${T.examCfg}</h3>
+                <div style="flex:1; overflow-y:auto; display: flex; flex-direction: column; gap: 15px; padding-top: 20px;">
+                    <div style="background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 12px; text-align: center;">
+                        <p style="margin: 0; color: var(--gold); font-weight: bold;">STANDART SINAV KURALLARI</p>
+                        <hr style="border: 0; border-top: 1px solid var(--border); margin: 10px 0;">
+                        <ul style="text-align: left; font-size: 0.9rem; list-style: none; padding: 0;">
+                            <li>⏳ Soru Başına: <b>10 Saniye</b></li>
+                            <li>❤️ Toplam Can: <b>3 Can</b></li>
+                            <li>🔀 Zorluk: <b>4 Yanıt</b></li>
+                            <li>✨ Bonus: <b>Seri doğruya +1 Can</b></li>
+                        </ul>
+                    </div>
+                    <p style="font-size: 0.8rem; opacity: 0.7; text-align: center;">Sınav modunda ayarlar sabittir. Kendini kanıtlamaya hazır mısın?</p>
+                </div>
+                <div class="action-area">
+                    <button class="btn-ui" onclick="askNameAndStart('exam')">${T.startExam}</button>
+                    <button class="btn-ui" style="background:#555; box-shadow: 0 5px 0 #333;" onclick="show('scr-login')">${T.btnBack}</button>
+                </div>
+            </div>
+
+            <div id="scr-practice-config" class="screen">
+                <h3>${T.pracCfg}</h3>
+                <div style="flex:1; overflow-y:auto;">
+                    <label class="config-label">${T.cfgDist}</label>
+                    <select id="prac-dist">
+                        <option value="1">2 Şık</option>
+                        <option value="3" selected>4 Şık</option>
+                        <option value="5">6 Şık</option>
+                    </select>
+                    <label class="config-label">${T.cfgMode}</label>
+                    <select id="prac-mode-new" onchange="document.getElementById('prac-time-box').style.display = this.value==='timed'?'block':'none'">
+                        <option value="static">${T.modeStatic}</option>
+                        <option value="timed">${T.modeTimed}</option>
+                    </select>
+                    <div id="prac-time-box" style="display:none;">
+                        <label class="config-label">${T.cfgTime}</label>
+                        <input type="number" id="prac-time" value="10" min="3" max="60">
+                        <label class="config-label">Can (Bu modda hata yapınca azalır)</label>
+                        <input type="number" id="prac-life" value="3" min="1" max="10">
+                    </div>
+                    <label class="config-label">Kelime Havuzu</label>
+                    <select id="prac-pool" onchange="toggleWordSelection(this.value)">
+                        <option value="all">Tüm Kelimeler</option>
+                        <option value="errors">Sadece Hata Yapılanlar</option>
+                        <option value="custom">${T.poolCustom}</option>
+                    </select>
+                    <div id="custom-word-selector" style="display:none; margin-top:10px;">
+                        <label class="config-label">Çalışmak İstediğin Kelimeleri Seç:</label>
+                        <div class="scroll-list" id="selection-list" style="height:150px;"></div>
+                    </div>
+                </div>
+                <div class="action-area">
+                    <button class="btn-ui" style="background:var(--secondary); box-shadow: 0 5px 0 #1689be;" onclick="askNameAndStart('prac')">${T.startPrac}</button>
+                    <button class="btn-ui" style="background:#555; box-shadow: 0 5px 0 #333;" onclick="show('scr-login')">${T.btnBack}</button>
+                </div>
+            </div>
+
+            <div id="scr-settings" class="screen">
+                <h3>${T.setHead}</h3>
+                <div class="tab-menu" style="flex-wrap: wrap;">
+                    <button class="tab-btn ${currentTab==='words'?'active':''}" onclick="switchTab('words')">${T.tabWords}</button>
+                    <button class="tab-btn ${currentTab==='rank'?'active':''}" onclick="switchTab('rank')">${T.tabRank}</button>
+                    <button class="tab-btn ${currentTab==='errors'?'active':''}" onclick="switchTab('errors')" style="background:var(--danger)">${T.tabErrors}</button>
+                </div>
+                <div id="panel-words" style="display: ${currentTab==='words'?'flex':'none'}; flex-direction: column; height: 100%; overflow:hidden;">
+                    <div style="display:flex; gap:5px; margin-bottom:10px;">
+                        <input type="text" id="in-e" placeholder="English" style="flex:1; margin:0;">
+                        <input type="text" id="in-t" placeholder="Türkçe" style="flex:1; margin:0;">
+                        <button id="btn-add-update" onclick="addWord()" style="background:var(--primary); color:white; border:none; padding:0 15px; border-radius:12px; font-weight:bold;">${T.add}</button>
+                        <button id="btn-cancel-edit" onclick="cancelEdit()" style="display:none; background:var(--danger); color:white; border:none; padding:0 10px; border-radius:12px; font-weight:bold;">${T.cancel}</button>
+                    </div>
+                    <div class="scroll-list" id="settings-list"></div>
+                </div>
+                <div id="panel-rank" style="display: ${currentTab==='rank'?'flex':'none'}; flex-direction: column; height: 100%; overflow:hidden;">
+                    <div id="bulk-controls" style="display:none;">
+                        <div class="bulk-header">
+                            <input type="checkbox" id="check-all-rank" onclick="toggleAllRankChecks(this.checked)">
+                            <label for="check-all-rank"><b>${T.selectAll}</b></label>
+                        </div>
+                        <button id="btn-bulk-delete" class="btn-ui" onclick="deleteSelectedRanks()">${T.deleteSelected}</button>
+                    </div>
+                    <div class="scroll-list" id="rank-edit-list"></div>
+                </div>
+                <div id="panel-errors" style="display: ${currentTab==='errors'?'flex':'none'}; flex-direction: column; height: 100%; overflow:hidden;">
+                    <button class="btn-ui" style="background:var(--danger); font-size:0.8rem; padding:10px;" onclick="clearErrors()">${T.resetErrors}</button>
+                    <div class="scroll-list" id="error-list"></div>
+                </div>
+                <div class="action-area">
+                    <button class="btn-ui" style="background:#555; box-shadow: 0 5px 0 #333;" onclick="show('scr-login'); renderRankings(); cancelEdit();">${T.btnBack}</button>
+                </div>
+            </div>
+
+            <div id="scr-game" class="screen">
+                <div class="top-bar">
+                    <div id="life-box" style="background:var(--card); padding:8px 12px; border-radius:10px; border:1px solid var(--border);">❤️ <span id="u-life">3</span></div>
+                    <div id="stats-area" style="display:none; gap:5px;">
+                        <span class="stats-badge" style="color:var(--primary)">${T.right}: <span id="st-r">0</span></span>
+                        <span class="stats-badge" style="color:var(--danger)">${T.wrong}: <span id="st-w">0</span></span>
+                        <span class="stats-badge" style="color:var(--secondary)">🕒 <span id="st-t">0</span>s</span>
+                    </div>
+                    <div id="score-box" style="background:var(--card); padding:8px 12px; border-radius:10px; border:1px solid var(--border);">⭐ <span id="u-score">0</span></div>
+                </div>
+                <div class="timer-container" id="t-cont"><div id="timer-bar"></div></div>
+                <div class="word-box">
+                    <h1 id="q-text" class="q-word">...</h1>
+                    <p id="h-text" style="color:var(--secondary); font-weight:bold; min-height:24px; font-size:1.2rem; margin: 15px 0;"></p>
+                    <div id="options-box" class="options-grid"></div>
+                </div>
+                <div class="action-area">
+                    <button id="btn-hint" class="btn-ui" style="background:#666; box-shadow: 0 5px 0 #444;" onclick="useHint()">
+                        ${T.btnHint}
+                        <div class="hint-badge" id="hint-count">0</div>
+                        <div class="hint-progress-container"><div id="hint-progress" class="hint-progress-fill"></div></div>
+                    </button>
+                    <button id="btn-next" class="btn-ui" style="background:var(--secondary); box-shadow: 0 5px 0 #1689be;" onclick="nextQuestion()">${T.btnNext}</button>
+                    <button id="btn-game-exit" onclick="handleExitRequest()" style="background:none; border:none; color:#ff4b4b; width:100%; cursor:pointer; font-weight:bold; font-size:1rem; margin-top:10px;"></button>
+                </div>
+            </div>
+        `;
+        renderRankings(); renderList(); renderRankEditList(); renderSelectionList();
+    }
+
+    // --- YENİ EKLENEN TOPLU SİLME FONKSİYONLARI ---
+    function toggleAllRankChecks(checked) {
+        const listCont = document.getElementById('rank-edit-list');
+        const bulkBtn = document.getElementById('btn-bulk-delete');
+        
+        if(checked) {
+            listCont.classList.add('show-checks');
+            bulkBtn.style.display = 'block';
+        } else {
+            listCont.classList.remove('show-checks');
+            bulkBtn.style.display = 'none';
+        }
+
+        const checks = document.querySelectorAll('.rank-check');
+        checks.forEach(c => c.checked = checked);
+    }
+
+    function deleteSelectedRanks() {
+        const checks = document.querySelectorAll('.rank-check:checked');
+        if(checks.length === 0) return;
+
+        if(confirm(`${checks.length} skor kaydı silinsin mi?`)) {
+            const indicesToDelete = Array.from(checks).map(c => parseInt(c.dataset.index)).sort((a,b) => b-a);
+            indicesToDelete.forEach(idx => leaders.splice(idx, 1));
+            
+            saveRankData();
+            document.getElementById('check-all-rank').checked = false;
+            toggleAllRankChecks(false);
+            renderRankEditList();
+        }
+    }
+    // ----------------------------------------------
+
+    function startPractice() {
+        const dist = parseInt(document.getElementById('prac-dist').value);
+        const mode = document.getElementById('prac-mode-new').value; 
+        const time = parseInt(document.getElementById('prac-time').value);
+        const lifeInput = parseInt(document.getElementById('prac-life').value);
+        const pool = document.getElementById('prac-pool').value;
+
+        s.mode = 'free'; s.score = 0; 
+        s.life = (mode === 'timed') ? lifeInput : 999; 
+        s.maxTime = (mode === 'timed') ? time : 0; 
+        s.distractorCount = dist; s.correctCount = 0; s.wrongCount = 0; s.totalSeconds = 0;
+        
+        const userErrors = errorLog[s.playerName] || {};
+        if(pool === 'errors') s.activeDb = db.filter(w => userErrors[w.e]);
+        else if(pool === 'custom') s.activeDb = Array.from(document.querySelectorAll('.word-check:checked')).map(cb => db[parseInt(cb.value)]);
+        else s.activeDb = db;
+
+        if(!s.activeDb || s.activeDb.length === 0) { alert("Seçilen kriterde kelime bulunamadı!"); return; }
+        
+        document.getElementById('stats-area').style.display = 'flex'; 
+        document.getElementById('score-box').style.display = 'none';
+        document.getElementById('life-box').style.visibility = (mode === 'timed') ? 'visible' : 'hidden'; 
+        document.getElementById('u-life').innerText = s.life;
+        document.getElementById('t-cont').style.display = (mode === 'timed') ? 'block' : 'none';
+        document.getElementById('btn-game-exit').innerText = LANGS[curLang].btnExit; s.startTime = Date.now();
+        
+        if(globalClockID) clearInterval(globalClockID); 
+        globalClockID = setInterval(() => { s.totalSeconds = Math.floor((Date.now() - s.startTime) / 1000); document.getElementById('st-t').innerText = s.totalSeconds; }, 1000);
+        
+        show('scr-game'); updateHintUI(); nextQuestion();
+    }
+
+    function startExam() {
+        s.mode = 'exam-timed'; 
+        s.life = 3; 
+        s.maxTime = 10; 
+        s.distractorCount = 3; 
+        s.score = 0; 
+        s.bonusStreak = 0; 
+        s.activeDb = db;
+        
+        document.getElementById('stats-area').style.display = 'none'; 
+        document.getElementById('score-box').style.display = 'block';
+        document.getElementById('u-score').innerText = "0";
+        document.getElementById('t-cont').style.display = 'block'; 
+        document.getElementById('life-box').style.visibility = 'visible';
+        document.getElementById('u-life').innerText = s.life;
+        document.getElementById('btn-game-exit').innerText = LANGS[curLang].btnGiveUp; 
+        
+        show('scr-game'); updateHintUI(); nextQuestion();
+    }
+
+    function check(btn, val) {
+        if(s.answered) return; s.answered = true; if(timerID) clearInterval(timerID); const correct = val === s.cur.t;
+        if(correct) { 
+            if(btn) btn.style.background = "var(--primary)"; 
+            s.score += 10; 
+            s.correctCount++; 
+            s.correctStreak++; 
+            if(s.mode.startsWith('exam')) {
+                s.bonusStreak++;
+                let requiredForBonus = 10 + Math.floor(s.score / 500) * 2;
+                if(s.bonusStreak >= requiredForBonus) {
+                    s.life++; s.bonusStreak = 0;
+                    document.getElementById('u-life').classList.add('bonus-life-anim');
+                    setTimeout(() => document.getElementById('u-life').classList.remove('bonus-life-anim'), 1000);
+                }
+            }
+            if(s.correctStreak >= s.nextHintAt) { s.hints++; s.correctStreak = 0; s.nextHintAt += 2; confetti({ particleCount: 40, spread: 70, origin: { y: 0.6 }, colors: ['#ffd700', '#ffffff'] }); } 
+            confetti({ particleCount: 20, spread: 50, origin: { y: 0.8 } }); 
+        } else { 
+            if(btn) btn.style.background = "var(--danger)"; s.wrongCount++; 
+            s.correctStreak = Math.max(0, s.correctStreak - 1); 
+            s.bonusStreak = 0;
+            if(!errorLog[s.playerName]) errorLog[s.playerName] = {}; 
+            if(!errorLog[s.playerName][s.cur.e]) errorLog[s.playerName][s.cur.e] = { count: 0, t: s.cur.t }; 
+            errorLog[s.playerName][s.cur.e].count++; 
+            localStorage.setItem('sidelya_errors_v21_users', JSON.stringify(errorLog)); 
+            if(s.mode.startsWith('exam') || (s.mode === 'free' && s.maxTime > 0)) s.life--;
+            document.querySelectorAll('.btn-opt').forEach(b => { if(b.innerText === s.cur.t) b.style.background = "var(--primary)"; }); 
+        }
+        
+        document.getElementById('u-score').innerText = s.score; 
+        document.getElementById('u-life').innerText = s.life; 
+        document.getElementById('st-r').innerText = s.correctCount; 
+        document.getElementById('st-w').innerText = s.wrongCount; 
+        updateHintUI();
+
+        if(s.life <= 0) handleGameOver(); 
+        else { document.getElementById('btn-next').style.display = 'block'; document.getElementById('btn-hint').style.display = 'none'; }
+    }
+
+    function editWord(index) { editIndex = index; document.getElementById('in-e').value = db[index].e; document.getElementById('in-t').value = db[index].t; document.getElementById('btn-add-update').innerText = LANGS[curLang].update; document.getElementById('btn-add-update').style.background = "var(--warning)"; document.getElementById('btn-cancel-edit').style.display = "block"; }
+    function cancelEdit() { editIndex = null; const inE = document.getElementById('in-e'); if(inE) { inE.value = ''; document.getElementById('in-t').value = ''; document.getElementById('btn-add-update').innerText = LANGS[curLang].add; document.getElementById('btn-add-update').style.background = "var(--primary)"; document.getElementById('btn-cancel-edit').style.display = "none"; } }
+    function deleteOne(index) { if(editIndex === index) cancelEdit(); lastDeleted = { data: db[index], index: index }; db.splice(index, 1); save(); renderList(); renderSelectionList(); showUndoToast(); }
+    function showUndoToast() { const toast = document.getElementById('undo-toast'); const btn = document.getElementById('undo-btn'); toast.style.display = 'flex'; if(undoTimeout) clearTimeout(undoTimeout); btn.onclick = () => { if(lastDeleted) { db.splice(lastDeleted.index, 0, lastDeleted.data); save(); renderList(); renderSelectionList(); toast.style.display = 'none'; lastDeleted = null; } }; undoTimeout = setTimeout(() => { toast.style.display = 'none'; lastDeleted = null; }, 5000); }
+    
+    function renderRankEditList() { 
+        const cont = document.getElementById('rank-edit-list'); 
+        const bulkDiv = document.getElementById('bulk-controls');
+        if(!cont) return; 
+
+        if(leaders.length > 1) {
+            bulkDiv.style.display = 'block';
+        } else {
+            bulkDiv.style.display = 'none';
+            cont.classList.remove('show-checks');
+        }
+
+        cont.innerHTML = leaders.map((r, i) => `
+            <div class="rank-edit-item">
+                <input type="checkbox" class="rank-check" data-index="${i}">
+                <span><b style="color:var(--primary);">${r.score} P</b> - ${r.name}</span>
+                <button onclick="editRankName(${i})" class="edit-btn">✎</button>
+                <button onclick="deleteRank(${i})" style="background:none; border:none; color:#ff4b4b; cursor:pointer;">✕</button>
+            </div>`).join(''); 
+    }
+
+    function resetHintSystem() { s.hints = 0; s.correctStreak = 0; s.nextHintAt = 10; s.usedHintCount = 0; updateHintUI(); }
+    function updateHintUI() { const btn = document.getElementById('btn-hint'); const badge = document.getElementById('hint-count'); const progress = document.getElementById('hint-progress'); if(!badge) return; badge.innerText = s.hints; let percent = (s.correctStreak / s.nextHintAt) * 100; progress.style.width = Math.min(percent, 100) + "%"; if(s.hints > 0) { btn.style.background = "var(--warning)"; btn.style.boxShadow = "0 5px 0 #c07801"; btn.style.opacity = "1"; } else { btn.style.background = "#444"; btn.style.boxShadow = "0 5px 0 #222"; btn.style.opacity = "0.8"; } }
+    function renderSelectionList() { const cont = document.getElementById('selection-list'); if(!cont) return; cont.innerHTML = db.map((w, i) => `<label class="word-select-item"><input type="checkbox" class="word-check" value="${i}"><span>${w.e} - ${w.t}</span></label>`).join(''); }
+    function toggleWordSelection(val) { document.getElementById('custom-word-selector').style.display = val === 'custom' ? 'block' : 'none'; if(val === 'custom') renderSelectionList(); }
+    
+    function askNameAndStart(type) { 
+        if(type === 'prac') {
+            s.playerName = "ÖĞRENCİ"; 
+            resetHintSystem();
+            startPractice();
+        } else {
+            let name = prompt(LANGS[curLang].placeholder); 
+            if(!name || name.trim() === "") { alert(LANGS[curLang].alertName); return; } 
+            s.playerName = name.trim().toUpperCase(); 
+            resetHintSystem(); 
+            startExam(); 
+        }
+    }
+
+    function nextQuestion() { if(timerID) clearInterval(timerID); s.answered = false; s.time = 100; document.getElementById('btn-next').style.display = 'none'; document.getElementById('btn-hint').style.display = 'block'; document.getElementById('h-text').innerText = ""; document.getElementById('timer-bar').style.width = "100%"; const pool = s.activeDb || db; s.cur = pool[Math.floor(Math.random() * pool.length)]; document.getElementById('q-text').innerText = s.cur.e; let opts = [s.cur.t]; let others = db.filter(w => w.t !== s.cur.t).sort(() => 0.5 - Math.random()); for(let i=0; i < s.distractorCount; i++) if(others[i]) opts.push(others[i].t); opts.sort(() => 0.5 - Math.random()); const box = document.getElementById('options-box'); box.innerHTML = ''; opts.forEach(o => { const b = document.createElement('button'); b.className = 'btn-opt'; b.innerText = o; b.onclick = () => check(b, o); box.appendChild(b); }); if((s.mode === 'exam-timed') || (s.mode === 'free' && s.maxTime > 0)) { let step = 100 / (s.maxTime * 10); timerID = setInterval(() => { s.time -= step; document.getElementById('timer-bar').style.width = s.time + "%"; if(s.time <= 0) { clearInterval(timerID); check(null, null); } }, 100); } updateHintUI(); }
+    function useHint() { if(s.hints <= 0) { alert("İpucu kazanmak için " + (s.nextHintAt - s.correctStreak) + " doğru daha yapmalısın!"); return; } s.hints--; s.usedHintCount++; document.getElementById('h-text').innerText = `${LANGS[curLang].hintText}: ${s.cur.t[0]}...${s.cur.t.slice(-1)}`; document.getElementById('btn-hint').style.display = 'none'; updateHintUI(); }
+    function switchTab(tab) { currentTab = tab; document.getElementById('panel-words').style.display = tab === 'words' ? 'flex' : 'none'; document.getElementById('panel-rank').style.display = tab === 'rank' ? 'flex' : 'none'; document.getElementById('panel-errors').style.display = tab === 'errors' ? 'flex' : 'none'; document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); if(tab === 'rank') renderRankEditList(); if(tab === 'errors') renderErrorList(); }
+    function renderErrorList() { const cont = document.getElementById('error-list'); cont.innerHTML = ""; const users = Object.keys(errorLog); if(users.length === 0) { cont.innerHTML = '<p style="text-align:center; opacity:0.5;">Henüz hata kaydı yok.</p>'; return; } users.reverse().forEach(user => { const userHeader = document.createElement('div'); userHeader.className = "error-user-header"; userHeader.innerText = "👤 " + user; cont.appendChild(userHeader); const sortedWords = Object.entries(errorLog[user]).reverse(); sortedWords.forEach(([word, data]) => { const item = document.createElement('div'); item.className = "word-item"; const displayInfo = (typeof data === 'object') ? `<b>${word}</b>: ${data.t}` : `<b>${word}</b>`; item.innerHTML = `<span>${displayInfo}</span><span class="error-count">${data.count || data} Hata</span>`; cont.appendChild(item); }); }); }
+    function clearErrors() { if(confirm("Tüm hata kayıtları silinsin mi?")) { errorLog = {}; localStorage.removeItem('sidelya_errors_v21_users'); renderErrorList(); } }
+    function handleExitRequest() { if(s.mode === 'free') { if(globalClockID) clearInterval(globalClockID); const rate = Math.round((s.correctCount / (s.correctCount + s.wrongCount || 1)) * 100); alert(`${LANGS[curLang].pracSummary}\n\n👤 Oyuncu: ${s.playerName}\n✅ Doğru: ${s.correctCount}\n❌ Yanlış: ${s.wrongCount}\n🎯 Başarı: %${rate}\n⏱ Süre: ${s.totalSeconds}s\n\n(Ders modu skorları listeye kaydedilmez.)`); location.reload(); } else { if(confirm(LANGS[curLang].exitConfirm)) { if(timerID) clearInterval(timerID); handleGameOver(); } } }
+    function renderRankings() { const list = document.getElementById('rank-list'); if(!list) return; list.innerHTML = leaders.length ? leaders.slice(0, 10).map((r, i) => { const title = i < 3 ? `<span class="title-tag" style="background:${TITLES[i].color}; color:#000;">${TITLES[i].name}</span>` : ""; return `<div class="rank-item rank-${i+1}"><span><b>${i+1}.</b> ${r.name} ${title}</span><span style="color:var(--primary); font-weight:bold;">${r.score} P</span></div>`; }).join('') : `<p style="text-align:center; opacity:0.5;">${LANGS[curLang].emptyRank}</p>`; }
+    function editRankName(index) { const newName = prompt("Yeni isim:", leaders[index].name); if(newName) { leaders[index].name = newName.trim().toUpperCase(); saveRankData(); renderRankEditList(); } }
+    function deleteRank(index) { if(confirm("Silinsin mi?")) { leaders.splice(index, 1); saveRankData(); renderRankEditList(); } }
+    function saveRankData() { localStorage.setItem('sidelya_rank_v21', JSON.stringify(leaders)); }
+    function changeLang(lang) { curLang = lang; localStorage.setItem('sidelya_lang', lang); initApp(); }
+    function openSettings() { show('scr-settings'); renderList(); renderRankEditList(); }
+    function save() { localStorage.setItem('sidelya_db_v21', JSON.stringify(db)); }
+    function show(id) { document.querySelectorAll('.screen').forEach(e => e.classList.remove('active-screen')); document.getElementById(id).classList.add('active-screen'); }
+    function addWord() { const e = document.getElementById('in-e').value.trim(); const t = document.getElementById('in-t').value.trim(); if(e && t) { if(editIndex !== null) { db[editIndex] = {e, t}; cancelEdit(); } else { db.push({e, t}); } save(); renderList(); document.getElementById('in-e').value=''; document.getElementById('in-t').value=''; renderSelectionList(); } }
+    function renderList() { const cont = document.getElementById('settings-list'); if(!cont) return; cont.innerHTML = db.slice().reverse().map((w, i) => { const realIdx = db.indexOf(w); return `<div class="word-item"><span><b>${w.e}</b>: ${w.t}</span><button onclick="editWord(${realIdx})" class="edit-btn">✎</button><button onclick="deleteOne(${realIdx})" style="background:none; border:none; color:#ff4b4b; cursor:pointer;">✕</button></div>` }).join(''); }
+    function handleGameOver() { if(timerID) clearInterval(timerID); if(globalClockID) clearInterval(globalClockID); const finalScore = s.score; let summary = ""; const rate = Math.round((s.correctCount / (s.correctCount + s.wrongCount || 1)) * 100); summary = `\n\n✅ Doğru: ${s.correctCount}\n❌ Yanlış: ${s.wrongCount}\n🎯 Başarı: %${rate}\n⏱ Süre: ${s.totalSeconds}s`; if(s.mode === 'free') summary += `\n\n(Ders modu skorları listeye kaydedilmez.)`; setTimeout(() => { alert(LANGS[curLang].gameOver + finalScore + summary); if(s.mode !== 'free') saveFinalScore(s.playerName, finalScore); location.reload(); }, 500); }
+    function saveFinalScore(name, score) { if(score <= 0) return; const idx = leaders.findIndex(l => l.name.toUpperCase() === name.toUpperCase()); if (idx !== -1) { if (score > leaders[idx].score) leaders[idx].score = score; } else { leaders.push({ name: name.toUpperCase(), score: score }); } leaders.sort((a, b) => b.score - a.score); saveRankData(); }
+    window.onload = () => { initApp(); };
+</script>
+</body>
+</html>
