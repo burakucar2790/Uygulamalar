@@ -1,142 +1,48 @@
 <!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    
-    <!-- 1. ADIM: Mobil Uyumluluk İçin Viewport Metası -->
-    <!-- Bu satır, tarayıcıya sayfanın genişliğini cihazın ekran genişliğine eşitlemesini ve başlangıç yakınlaştırma seviyesini 1 olarak ayarlamasını söyler. Responsive tasarımın temelidir. -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <title>Mobil Uyumlu Tam Ekran Uygulama</title>
-    
-    <style>
-        /* 2. ADIM: CSS ile Tam Ekran ve Esnek Tasarım */
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Calcualtor :: By Karan Kumar</title>
+        <link rel="stylesheet" href="style.css" />
+        <script src="script.js" defer></script>
+    </head>
 
-        /* CSS Reset: Tarayıcıların eklediği varsayılan margin ve padding'i sıfırlar. */
-        /* "arkaplan olmasın" isteğinizin temel karşılığı budur, yani kenarlarda boşluk kalmaz. */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box; /* Kutu modelini daha sezgisel hale getirir. */
-        }
-
-        html, body {
-            width: 100%;
-            height: 100%;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f0f2f5; /* İçeriğinizi daha iyi göstermek için hafif bir arkaplan */
-            color: #1c1e21;
-        }
-
-        /* Ana Konteyner: Tüm içeriği sarar ve ekranı kaplar. */
-        .app-container {
-            width: 100%;
-            min-height: 100vh; /* Viewport Height: Ekranın görünen yüksekliğinin %100'ü kadar yer kaplar. */
-            display: flex; /* Flexbox ile esnek bir layout oluştururuz. */
-            flex-direction: column; /* Öğeleri dikeyde hizalar. */
-            align-items: center; /* Öğeleri yatayda ortalar. */
-            justify-content: center; /* Öğeleri dikeyde ortalar. */
-            padding: 20px; /* İçeriğin ekran kenarlarına yapışmasını engeller. */
-            text-align: center;
-        }
-
-        .content-box {
-            background-color: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            max-width: 600px; /* İçeriğin çok geniş ekranlarda aşırı yayılmasını engeller. */
-            width: 100%;
-        }
-
-        h1 {
-            margin-bottom: 16px;
-            font-size: 2rem; /* rem birimi, kök elementin font boyutuna göre ölçeklenir, daha esnektir. */
-        }
-
-        p {
-            font-size: 1.1rem;
-            line-height: 1.6;
-        }
-        
-        /* Tam Ekran Butonu Stili */
-        #fullscreen-btn {
-            margin-top: 24px;
-            padding: 12px 24px;
-            font-size: 1rem;
-            font-weight: bold;
-            color: white;
-            background-color: #007bff;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-
-        #fullscreen-btn:hover {
-            background-color: #0056b3;
-        }
-
-        /* Media Query: Mobil Cihazlar İçin Özel Stiller */
-        /* Ekran genişliği 768px'den küçük olduğunda bu kurallar geçerli olur. */
-        @media (max-width: 768px) {
-            .content-box {
-                padding: 25px;
-            }
-            h1 {
-                font-size: 1.5rem;
-            }
-            p {
-                font-size: 1rem;
-            }
-        }
-    </style>
-</head>
-<body>
-
-    <div class="app-container">
-        <div class="content-box">
-            <h1>Uygulamanıza Hoş Geldiniz!</h1>
-            <p>Bu uygulama artık mobil, tablet ve masaüstü cihazlarla uyumludur. Ekran boyutunu değiştirerek test edebilirsiniz.</p>
-            
-            <!-- 4. ADIM: Gerçek Tam Ekran Modu İçin Buton -->
-            <button id="fullscreen-btn">Tam Ekran Yap</button>
+    <body>
+        <div class="container">
+            <section id="Display-area">
+                <div class="currentInput"></div>
+                <div class="answerScreen">0</div>
+            </section>
+            <section class="keypad-btns">
+                <button type="button" class="fun_btn" id="clear" value="">
+                    C
+                </button>
+                <button type="button" class="fun_btn" id="erase" value="">
+                    &#11013;
+                </button>
+                <button type="button" class="fun_btn" value="/">/</button>
+                <button type="button" class="fun_btn" value="%">%</button>
+                <button type="button" class="num_btn" value="7">7</button>
+                <button type="button" class="num_btn" value="8">8</button>
+                <button type="button" class="num_btn" value="9">9</button>
+                <button type="button" class="fun_btn" value="*">x</button>
+                <button type="button" class="num_btn" value="4">4</button>
+                <button type="button" class="num_btn" value="5">5</button>
+                <button type="button" class="num_btn" value="6">6</button>
+                <button type="button" class="fun_btn" value="-">-</button>
+                <button type="button" class="num_btn" value="1">1</button>
+                <button type="button" class="num_btn" value="2">2</button>
+                <button type="button" class="num_btn" value="3">3</button>
+                <button type="button" class="fun_btn" value="+">+</button>
+                <button type="button" class="num_btn" value="00">00</button>
+                <button type="button" class="num_btn" value="0">0</button>
+                <button type="button" class="num_btn" value=".">.</button>
+                <button type="button" class="fun_btn" id="evaluate" value="">
+                    =
+                </button>
+            </section>
         </div>
-    </div>
-
-    <script>
-        // 4. ADIM: Gerçek Tam Ekran Modu İçin JavaScript
-        const fullscreenBtn = document.getElementById('fullscreen-btn');
-        const docElement = document.documentElement; // HTML elementini seçer
-
-        fullscreenBtn.addEventListener('click', () => {
-            // Tam ekran modu aktif değilse, tam ekran moduna geç
-            if (!document.fullscreenElement) {
-                if (docElement.requestFullscreen) {
-                    docElement.requestFullscreen();
-                } else if (docElement.webkitRequestFullscreen) { /* Safari */
-                    docElement.webkitRequestFullscreen();
-                } else if (docElement.msRequestFullscreen) { /* IE11 */
-                    docElement.msRequestFullscreen();
-                }
-                fullscreenBtn.textContent = 'Tam Ekrandan Çık';
-            } 
-            // Tam ekran modu aktifse, moddan çık
-            else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
-                fullscreenBtn.textContent = 'Tam Ekran Yap';
-            }
-        });
-        
-        // Tam ekran durumundaki değişiklikleri dinle (örn: ESC tuşu ile çıkıldığında)
-        document.addEventListener('fullscreenchange', () => {
-            if (!document.fullscreenElement) {
-                fullscreenBtn.textContent = 'Tam Ekran Yap';
-            }
-        });
-    </script>
-
-</body>
+    </body>
 </html>
