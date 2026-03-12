@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hesap Makinesi</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+        <div class="calculator">
+            <div class="calculator-screen">
+                <button class="history-toggle" title="Geçmişi Göster/Gizle">🕒</button>
+                <div class="calculator-history"></div>
+                <div class="calculator-display">0</div>
+            </div>
+
+            <div class="calculator-keys">
+                <button class="key--operator" data-action="clear">AC</button>
+                <button class="key--operator" data-action="negate">+/-</button>
+                <button class="key--operator" data-action="percent">%</button>
+                <button class="key--operator" data-action="divide">&divide;</button>
+
+                <button>7</button>
+                <button>8</button>
+                <button>9</button>
+                <button class="key--operator" data-action="multiply">&times;</button>
+
+                <button>4</button>
+                <button>5</button>
+                <button>6</button>
+                <button class="key--operator" data-action="subtract">&minus;</button>
+
+                <button>1</button>
+                <button>2</button>
+                <button>3</button>
+                <button class="key--operator" data-action="add">+</button>
+
+                <button class="key--zero">0</button>
+                <button data-action="decimal">.</button>
+                <button class="key--operator" data-action="calculate">=</button>
+            </div>
+        </div>
+
+    <div class="modal-overlay hidden">
+        <div class="history-panel">
+            <button class="close-history-panel" title="Kapat">&times;</button>
+            <h3>Hesaplama Geçmişi</h3>
+            <div class="history-log"></div>
+            <button class="clear-history">Geçmişi Temizle</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

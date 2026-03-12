@@ -1,0 +1,231 @@
+html {
+    font-size: 62.5%;
+    box-sizing: border-box;
+}
+
+*, *::before, *::after {
+    box-sizing: inherit;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #202124;
+}
+
+.calculator {
+    width: 100%;
+    max-width: 320px;
+    border-radius: 16px;
+    overflow: hidden;
+    background-color: #202124;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.calculator-screen {
+    padding: 2rem 2rem 1rem;
+    position: relative; /* For positioning the toggle button */
+}
+
+.calculator-history {
+    min-height: 32px; /* İçerik yokken bile yer kaplaması için */
+    color: #9aa0a6;
+    font-size: 2rem;
+    text-align: right;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-right: 0.5rem; /* Ekranla hizalamak için küçük ayar */
+}
+
+.calculator-display {
+    background-color: #202124;
+    color: #e8eaed;
+    font-size: 6rem;
+    text-align: right;
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    font-weight: 300;
+    padding-bottom: 1rem;
+}
+
+.calculator-keys {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background-color: #202124;
+    padding: 0.5rem;
+}
+
+button {
+    height: 70px;
+    border-radius: 50%;
+    border: none;
+    font-size: 2.4rem;
+    color: #e8eaed;
+    background-color: #3c4043;
+    margin: 0.5rem;
+    cursor: pointer;
+    outline: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: #4a4e52;
+}
+
+button:active {
+    background-color: #5e6368;
+}
+
+.key--operator {
+    background-color: #8ab4f8;
+    color: #202124;
+}
+
+.key--operator:hover {
+    background-color: #a3c5f9;
+}
+
+.key--operator:active {
+    background-color: #5e97f6;
+}
+
+.key--operator[data-action="clear"],
+.key--operator[data-action="negate"],
+.key--operator[data-action="percent"] {
+    background-color: #5f6368;
+    color: #e8eaed;
+}
+
+.key--operator[data-action="clear"]:hover,
+.key--operator[data-action="negate"]:hover,
+.key--operator[data-action="percent"]:hover {
+    background-color: #70757a;
+}
+
+.key--operator[data-action="calculate"] {
+    background-color: #8ab4f8;
+    color: #202124;
+}
+
+.key--zero {
+    grid-column: span 2;
+    border-radius: 35px; /* height / 2 */
+    justify-content: flex-start;
+    padding-left: 28px;
+}
+
+.history-toggle {
+    position: absolute;
+    top: 2.5rem;
+    left: 2rem;
+    /* override default button styles */
+    height: 32px;
+    width: 32px;
+    border-radius: 50%;
+    background-color: transparent;
+    border: none;
+    color: #9aa0a6;
+    font-size: 2rem;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.history-toggle:hover {
+    background-color: #3c4043; /* a subtle hover effect */
+    color: #e8eaed;
+}
+
+.history-toggle:active {
+    background-color: #4a4e52;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-overlay.hidden {
+    display: none;
+}
+
+.history-panel {
+    background-color: #3c4043;
+    color: #e8eaed;
+    padding: 1.5rem;
+    border-radius: 8px;
+    width: 280px;
+    height: 480px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.close-history-panel {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    /* Reset button styles */
+    background: transparent;
+    border: none;
+    font-size: 3rem;
+    color: #9aa0a6;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    height: auto;
+    width: auto;
+    line-height: 1;
+}
+
+.close-history-panel:hover {
+    color: #e8eaed;
+    background: transparent;
+}
+
+.history-panel h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.8rem;
+    font-weight: 500;
+    border-bottom: 1px solid #5f6368;
+    padding-bottom: 1rem;
+}
+
+.history-log {
+    flex-grow: 1;
+    overflow-y: auto;
+    font-size: 1.6rem;
+    color: #bdc1c6;
+}
+
+.history-log div {
+    padding: 0.8rem 0.4rem;
+}
+
+.clear-history {
+    background-color: #5f6368;
+    border-radius: 8px;
+    height: auto;
+    padding: 1rem;
+    margin: 1rem 0 0 0;
+}
